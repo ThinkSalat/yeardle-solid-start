@@ -10,7 +10,7 @@ export default function App() {
       root={props => (
         <>
           <Nav />
-          <Suspense>{props.children}</Suspense>
+          <Suspense fallback={<div>Loading...</div>}>{props.children}</Suspense>
         </>
       )}
     >
