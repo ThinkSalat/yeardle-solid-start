@@ -1,8 +1,8 @@
 
 export type TriviaItem = string;
 
-export type TriviaItems = [TriviaItem, TriviaItem, TriviaItem]
+export type GameId = string;
 
 export type TriviaItemsByYear = {
-  [key: string]: TriviaItems[]
+  [key: string]: TriviaItem[]
 }

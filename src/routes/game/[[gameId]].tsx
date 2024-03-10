@@ -1,56 +1,84 @@
-import { useParams } from "@solidjs/router";
-import { For } from "solid-js";
+import { useParams, createAsync } from "@solidjs/router";
+import { For, createEffect, createSignal, Accessor } from "solid-js";
+import GuessInput from "~/components/GuessInput";
+import { MAX_YEAR, MIN_YEAR } from "~/constants";
+import { getRandomGameId, getTrivia } from "~/lib/api";
 import { triviaItemsByYear } from "~/lib/yeardleData";
+import { Game, YearRange } from "~/models";
 
-function getRandomKey<T>(obj: T): keyof T;
-function getRandomKey<T>(arr: T[]): number;
-function getRandomKey<T>(input: T | T[]): keyof T | number | undefined {
-  if (Array.isArray(input)) {
-    // Input is an array, pick a random index
-    return Math.floor(Math.random() * input.length);
-  } else {
-    // Input is an object, pick a random key
-    const keys = Object.keys(input as Record<string, unknown>) as (keyof T)[];
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    return randomKey;
-  }
+function GameTimeline({ guesses }: { guesses: Accessor<[number, YearRange][]> }) {
+  const minRange = () => Math.min(...guesses().map(([year]) => year)) - 200
+  const maxRange = () => Math.max(...guesses().map(([year]) => year)) + 200
+
+  return (
+    <div style={{ position: 'relative', height: '100px', border: '1px solid #ccc' }}>
+      <For each={guesses()}>
+        {([year]) => (
+          <div style={{
+            position: 'absolute',
+            left: `${((year - minRange()) / (maxRange() - minRange())) * 100}%`,
+            top: '50%',
+            "font-size": 'larger',
+            transform: 'translateX(-50%)',
+            padding: '2px',
+            "border-radius": '5px',
+            "background-color": 'beige'
+          }}>{year}</div>
+        )}
+      </For>
+    </div>
+  );
 }
 
-/**
- * getGameInfo takes a gameId or undefined
- * if undefined, makes a request to get a random gameId that (that user hasn't completed)
- * else if defined, decodes the year and trivia items
- * 
- * either way, it returns an objectl ike { year, trivia }
- * 
- */
-const getGameInfo = (gameId: string) => {
-
-  return {
-    year: 1999,
-    trivia: [
-      'justin beiver pregnant',
-      'jerry springer arrested',
-      'spongebob born'
-    ]
-  }
+function TriviaItem({ text }: { text: string }) {
+  return (
+    <li>{text}</li>
+  )
 }
 
-export default function Game() {
-  const { gameId } = useParams()
+function GuessResult({ guess, range }: { guess: number, range: YearRange }) {
 
-  const { year, trivia } = getGameInfo(gameId)
+  return (
+    <li>
+      <div>{guess}</div>
+      <div>{range.toString()}</div>
+    </li>
+  )
+}
 
-  console.log({year})
+export default function GameContainer() {
+  let { gameId } = useParams()
+  const game = gameId ? new Game(gameId) : Game.createRandomGame()
+
+  const [guesses, setGuesses] = createSignal<[number, YearRange][]>([])
+  const [isGameOver, setIsGameOver] = createSignal(false)
+
+  console.log(game, game.guesses)
+  const makeGuess = (guess: number) => {
+    const range = game.makeGuess(guess)
+    // if win, do something here
+    setGuesses(arr => [...arr, [guess, range]])
+    if (range.low === 0 || game.getNumGuessesLeft() === 0) {
+      game.endGame()
+      setIsGameOver(true)
+    }
+  }
   return (
     <div class="text-center mx-auto text-gray-700 p-4">
-      <div>{year}</div>
-
       <ul>
-        <For each={trivia}>
-          {triviaItem => <li>{triviaItem}</li>}
+        <For each={game.trivia.triviaItems}>
+          {triviaItem => <TriviaItem text={triviaItem} />}
         </For>
       </ul>
+
+      <GameTimeline guesses={guesses} />
+      <ul>
+        <For each={guesses()}>
+          {([guess, range]) => <GuessResult guess={guess} range={range} /> }
+        </For>
+      </ul>
+
+      <GuessInput makeGuess={makeGuess} />
     </div>
   );
 }
