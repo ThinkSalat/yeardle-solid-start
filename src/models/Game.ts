@@ -53,20 +53,17 @@ export class Game {
     return this.numGuessesAllowed - this.guesses.length
   }
 
-  endGame() {
+  endGame(): GameResult {
     // make a game result
     const result = new GameResult({ game: this, userId: 'shawn' })
-    console.log(result)
     // Do stuff like add to DB or whatever.
+    // If user, needs to add to user's game history.
+    // Player.addResult(result)
+    return result
   }
   // startGame
   // endGame
   // storeGameResult
-  // getNextGame
-  //   getRandomGame that hasn't been seen calculated by taking years that aren't in GameResults and randomly selecting one
-  //   getIncompletegames = games that the user has lost, sorted by the largest difference between the closest guess and the actual year. calculated by using GameResults
-  //   getCompleteGames that other mixes of trivia items.
-  //   getCompleteGames = games that have been won, sorted by the number ofguesses required. If there's a tie it selects a game by checking which original guess was furthest away. calculated with GameResults
 
 
 }
@@ -84,8 +81,10 @@ export class GameResult {
     this.userId = userId;
     this.guesses = game.guesses;
 
-    this.won = calcWon()
-    this.closestYear = getClosestYear()
+    this.won = game.guesses.at(-1) === game.trivia.year
+    this.closestYear = game.guesses.reduce( (currentClosestYear, currentYear) => {
+      return Math.abs(currentClosestYear - game.trivia.year) < Math.abs(currentYear - game.trivia.year) ? currentClosestYear : currentYear;
+    })
     this.difficulty = Math.abs(game.trivia.year - this.closestYear)
 
   }

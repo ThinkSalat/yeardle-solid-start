@@ -39,6 +39,11 @@ export default function GuessInput({ makeGuess }: { makeGuess: (number: number) 
 
 
   return (
-    <input ref={input} style={{ border: '1px solid black', "border-radius": '5px' }} type="numeric" name="guess" value={currentGuess()} onKeyDown={onKeyPress} />
+    <div>
+      <div>Enter your guess below:</div>
+
+      <input ref={input} style={{ border: '1px solid black', "border-radius": '5px' }} type="numeric" name="guess" value={currentGuess()} onKeyDown={onKeyPress} />
+
+    </div>
   )
 }
