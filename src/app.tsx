@@ -8,10 +8,10 @@ export default function App() {
   return (
     <Router
       root={props => (
-        <div class="bg-rose-of-sharon-200 text-2xl text-rose-of-sharon-950 w-screen h-screen">
+        <main class="bg-rose-of-sharon-200 text-2xl text-rose-of-sharon-950 w-full h-full min-h-screen min-w-screen">
           <Nav />
           <Suspense fallback={<div>Loading...</div>}>{props.children}</Suspense>
-        </div>
+        </main>
       )}
     >
       <FileRoutes />

@@ -1,7 +1,11 @@
 import { createEffect, createSignal } from "solid-js"
 import { Game } from "~/models"
 
-export default function GuessInput({ makeGuess }: { makeGuess: (number: number) => void }) {
+type GuessInputProps = {
+  makeGuess: (number: number) => void
+}
+
+export default function GuessInput({ makeGuess }: GuessInputProps) {
   const [currentGuess, setCurrentGuess] = createSignal('')
   let input;
 
