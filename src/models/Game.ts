@@ -3,6 +3,10 @@ import { Trivia, TriviaArgs, YearRange } from "~/models"
 import { GameId } from "~/types";
 
 
+const encodeStr = (str: string) => btoa(encodeURIComponent(str))
+
+const decodeStr = (base64: string) => decodeURIComponent(atob(base64))
+
 // Game handles all the gameplay functionality, including grabbing the information from a trivia class that's necessary to play a game.
 // need two cases - one where you get the gameId, and one where you generate a random game.
 // best option: static method to return a new Game instance after selecting randomnly
@@ -21,7 +25,7 @@ export class Game {
 
   // For encode and decode, will need to some basic obscuring
   static decodeId(gameId: GameId): TriviaArgs {
-    const [year, indicesString] = gameId.split('_')
+    const [year, indicesString] = decodeStr(gameId).split('_')
     return { year: Number(year), triviaIndices: indicesString.split(',').map(indexStr => Number(indexStr)) }
   }
 
@@ -29,7 +33,7 @@ export class Game {
 
     const year = trivia.year
     const indices = trivia.triviaIndices
-    return `${year}_${indices.toString()}`
+    return encodeStr(`${year}_${indices.toString()}`)
   }
 
   // will need to address handling all the logic of finding unplayed games when implement user
@@ -38,7 +42,7 @@ export class Game {
 
     const trivia = Trivia.createRandomTrivia()
     const gameId = Game.encodeId(trivia)
-    
+
     return new Game(gameId)
   }
 
@@ -49,7 +53,7 @@ export class Game {
     return YEAR_RANGES.find(yearRange => yearRange.numberInRange(difference))!
   }
 
-  getNumGuessesLeft() {
+  getNumGuessesLeft(): number {
     return this.numGuessesAllowed - this.guesses.length
   }
 
@@ -61,8 +65,10 @@ export class Game {
     // Player.addResult(result)
     return result
   }
-  // startGame
-  // endGame
+
+  reset() {
+    this.guesses = []
+  }
   // storeGameResult
 
 
@@ -82,20 +88,29 @@ export class GameResult {
     this.guesses = game.guesses;
 
     this.won = game.guesses.at(-1) === game.trivia.year
-    this.closestYear = game.guesses.reduce( (currentClosestYear, currentYear) => {
+    this.closestYear = game.guesses.reduce((currentClosestYear, currentYear) => {
       return Math.abs(currentClosestYear - game.trivia.year) < Math.abs(currentYear - game.trivia.year) ? currentClosestYear : currentYear;
     })
     this.difficulty = Math.abs(game.trivia.year - this.closestYear)
 
   }
+  
+  static decodeGameResult(str: string) {
+    return JSON.parse(decodeStr(str))
+  }
+
   // difficulty (if lost)
   //   sum of lower bounds of guesses
   //   could also just add the difference between the guess and the actual year
   //   or select the lowest difference in guess and the actual year, and reverse that list to get the games they had the most trouble with
   // replayGame()
   //   returns a Game with the gameId
-  // encodeGameResult()
-  //   encodes gameresult in way that user can't guess. to be used in url query params for challenges
+  encodeGameResult() {
+    return encodeStr(JSON.stringify({
+      guesses: this.guesses,
+      won: this.won
+    }))
+  }
   // history()
   //    list of GameResults with timestamp for this particualy gameid and userid (just the year isn't sufficient because some will have different trivia items)
 }
